@@ -1,0 +1,11 @@
+langchain
+python-dotenv
+ipykernel
+langchain
+langchain-community
+langchain-huggingface
+langchain-openai
+faiss-cpu
+youtube-transcript-api
+requests
+streamlit

@@ -7,6 +7,9 @@ This project leverages **Ollama (Mistral 7B)** as the LLM and is deployed locall
 
 ---
 
+![Project Demo](images/image.png)
+
+---
 ## 🧠 Key Features
 - 🔗 Accepts YouTube video links as input  
 - 📄 Automatically loads and processes video transcripts  

@@ -3,19 +3,13 @@ from rag.pipeline import run_pipeline
 
 st.set_page_config(layout="wide")
 
-# -----------------------------
 # Top Heading
-# -----------------------------
 st.title("🎥 YouTube RAG Chatbot")
 
-# -----------------------------
 # Bottom Layout (Left smaller, Right bigger)
-# -----------------------------
 left_col, right_col = st.columns([1, 2])  # <-- 1:2 ratio
 
-# -----------------------------
 # LEFT COLUMN (Nav / Video Info)
-# -----------------------------
 with left_col:
     st.header("📌 Video Info")
 
@@ -24,9 +18,7 @@ with left_col:
     if video_id:
         st.markdown(f"**Video ID:** `{video_id}`")
 
-# -----------------------------
 # RIGHT COLUMN (Main: Question + Answer)
-# -----------------------------
 with right_col:
     st.header("💬 Ask & Answer")
 

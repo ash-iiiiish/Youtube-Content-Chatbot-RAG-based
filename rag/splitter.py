@@ -6,4 +6,4 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 def split_text(text: str):
-    return splitter.split_text(text)
+    return splitter.create_documents([text])

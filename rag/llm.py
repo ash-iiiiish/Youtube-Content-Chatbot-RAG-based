@@ -1,7 +1,7 @@
 import requests
 
 OLLAMA_URL = "http://127.0.0.1:11434/v1/chat/completions"
-MODEL = "richardyoung/schematron-3b:Q4_K_M"
+MODEL = "mistral:7b"
 
 def call_llm(final_prompt: str) -> str:
     payload = {
@@ -12,4 +12,6 @@ def call_llm(final_prompt: str) -> str:
     }
 
     resp = requests.post(OLLAMA_URL, json=payload)
+    resp.raise_for_status()
+
     return resp.json()["choices"][0]["message"]["content"]

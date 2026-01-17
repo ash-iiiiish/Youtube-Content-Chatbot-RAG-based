@@ -1,29 +1,32 @@
 from rag.loader import load_transcript
 from rag.splitter import split_text
-from rag.vectorstore import create_vectorstore, get_retriever
-from rag.prompt import prompt
+from rag.vectorstore import create_vectorstore
+from rag.prompt import build_prompt
 from rag.llm import call_llm
 
-def answer_question(video_id: str, question: str) -> str:
-    # Load data
+def run_pipeline(video_id: str, question: str, ui_callback=None):
+
+    def update(step, percent):
+        if ui_callback:
+            ui_callback(step, percent)
+
+    update("Transcribing video", 10)
     text = load_transcript(video_id)
 
-    # Split
+    update("Splitting text", 30)
     chunks = split_text(text)
 
-    # Vector store
-    vector_store = create_vectorstore(chunks)
-    retriever = get_retriever(vector_store)
+    update("Creating embeddings", 50)
+    vectorstore = create_vectorstore(chunks)
 
-    # Retrieve context
+    update("Retrieving context", 70)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
     docs = retriever.invoke(question)
-    context = "\n".join([d.page_content for d in docs])
+    context = "\n\n".join(d.page_content for d in docs)
 
-    # Prompt
-    final_prompt = prompt.format(
-        context=context,
-        question=question
-    )
+    update("Generating answer", 90)
+    final_prompt = build_prompt(context, question)
+    answer = call_llm(final_prompt)
 
-    # LLM call
-    return call_llm(final_prompt)
+    update("Done", 100)
+    return answer

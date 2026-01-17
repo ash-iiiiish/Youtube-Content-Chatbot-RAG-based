@@ -1,7 +1,5 @@
 # Youtube-Content-Chatbot-RAG-based
 
-# YouTube Content Chatbot (RAG-Based)
-
 ## 📌 Project Overview
 The **YouTube Content Chatbot** is a Retrieval-Augmented Generation (RAG) based conversational assistant that allows users to query and interact with the content of YouTube videos. By providing a YouTube video link, users can ask topic-specific questions, and the system retrieves relevant video transcript chunks and generates accurate, context-aware responses using a locally deployed Large Language Model (LLM).
 

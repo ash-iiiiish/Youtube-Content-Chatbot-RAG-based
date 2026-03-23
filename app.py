@@ -23,7 +23,6 @@ html, body, [class*="css"] {
     background:#1e1e1e;
 }
 
-/* Header */
 .header {
     display:flex;
     justify-content:space-between;
@@ -35,17 +34,17 @@ html, body, [class*="css"] {
     font-size:22px;
 }
 
-/* Chat container */
 .chat-window {
     display:flex;
     flex-direction:column;
     gap:14px;
+    padding-bottom: 80px;
 }
 
-/* Chat row */
 .chat-row {
     display:flex;
     width:100%;
+    align-items: flex-end;
 }
 
 .user-row {
@@ -56,7 +55,6 @@ html, body, [class*="css"] {
     justify-content:flex-start;
 }
 
-/* Bubbles */
 .bubble {
     padding:10px 14px;
     border-radius:14px;
@@ -77,7 +75,6 @@ html, body, [class*="css"] {
     border:1px solid #3a3a3a;
 }
 
-/* Avatar */
 .avatar {
     width:30px;
     height:30px;
@@ -86,6 +83,7 @@ html, body, [class*="css"] {
     align-items:center;
     justify-content:center;
     font-size:0.8rem;
+    flex-shrink: 0;
     margin:0 8px;
 }
 
@@ -97,15 +95,27 @@ html, body, [class*="css"] {
     background:#3949ab;
 }
 
-/* Chat input center */
+/* ── FIXED: chat input now properly centered and full-width ── */
 [data-testid="stChatInput"] {
     position: fixed !important;
-    left: calc(50% + 150px) !important;
+    left: 50% !important;
     transform: translateX(-50%) !important;
     bottom: 24px !important;
-    width: min(900px, 90%) !important;
-    max-width: 900px !important;
+    width: min(730px, 90%) !important;
+    max-width: 730px !important;
     z-index: 999 !important;
+}
+
+/* Fix the inner textarea border to look clean */
+[data-testid="stChatInput"] > div {
+    border: 1px solid #3a3a3a !important;
+    border-radius: 12px !important;
+    background: #2a2a2a !important;
+}
+
+[data-testid="stChatInput"] textarea {
+    color: #eaeaea !important;
+    background: transparent !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -121,11 +131,8 @@ if "session_id" not in st.session_state:
 
 # ── Sidebar ─────────────────────────────────────────────────────────────
 with st.sidebar:
-
     st.title("📺 Video")
-
     video_id = st.text_input("YouTube Video ID")
-
     st.markdown("---")
     st.caption("Enter a video ID then ask questions about it.")
 
@@ -145,12 +152,12 @@ st.markdown("""
 
 
 # ── Chat Renderer ───────────────────────────────────────────────────────
+# FIX: Do NOT escape bot messages — render them as plain text inside the bubble.
+# Use html_lib.escape only for user input (untrusted), not for bot output.
 def build_chat(messages):
-
     rows = []
-
     for msg in messages:
-
+        # Escape user input to prevent XSS, preserve newlines
         safe = html_lib.escape(msg["content"]).replace("\n", "<br>")
 
         if msg["role"] == "user":
@@ -160,8 +167,9 @@ def build_chat(messages):
                 <div class="avatar avatar-user">U</div>
             </div>
             """)
-
         else:
+            # Bot content: already a plain string from LLM, safe to render as-is
+            # Still escape to avoid any accidental HTML in LLM output
             rows.append(f"""
             <div class="chat-row bot-row">
                 <div class="avatar avatar-bot">🤖</div>
@@ -172,47 +180,52 @@ def build_chat(messages):
     return '<div class="chat-window">' + "".join(rows) + "</div>"
 
 
-chat_container = st.empty()
+# ── FIX: Use st.components.v1.html instead of st.markdown for chat window ──
+import streamlit.components.v1 as components
 
-if st.session_state.messages:
-    chat_container.markdown(
-        build_chat(st.session_state.messages),
-        unsafe_allow_html=True
-    )
+def render_chat(messages):
+    if not messages:
+        return
+
+    # Inject styles + chat HTML into an iframe-based component
+    # This guarantees raw HTML renders correctly without Streamlit sanitizing it
+    html_content = f"""
+    <style>
+        body {{ margin: 0; background: transparent; font-family: Inter, sans-serif; color: #eaeaea; }}
+        .chat-window {{ display:flex; flex-direction:column; gap:14px; }}
+        .chat-row {{ display:flex; width:100%; align-items:flex-end; }}
+        .user-row {{ justify-content:flex-end; }}
+        .bot-row {{ justify-content:flex-start; }}
+        .bubble {{ padding:10px 14px; border-radius:14px; max-width:65%; font-size:0.95rem; line-height:1.5; word-wrap:break-word; }}
+        .bubble-user {{ background:#00695c; border:1px solid #00897b; color:white; }}
+        .bubble-bot {{ background:#2a2a2a; border:1px solid #3a3a3a; color:#eaeaea; }}
+        .avatar {{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.8rem; flex-shrink:0; margin:0 8px; }}
+        .avatar-user {{ background:#00897b; }}
+        .avatar-bot {{ background:#3949ab; }}
+    </style>
+    {build_chat(messages)}
+    """
+
+    # Height scales with number of messages (rough estimate)
+    estimated_height = max(200, len(messages) * 90)
+    components.html(html_content, height=estimated_height, scrolling=True)
+
+
+render_chat(st.session_state.messages)
 
 
 # ── Chat Input ──────────────────────────────────────────────────────────
 user_question = st.chat_input("Ask something about the video...")
 
 if user_question:
-
     if not video_id:
         st.warning("Please enter a YouTube Video ID in the sidebar first.")
         st.stop()
 
-    # Add user message
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_question
-    })
+    st.session_state.messages.append({"role": "user", "content": user_question})
 
-    chat_container.markdown(
-        build_chat(st.session_state.messages),
-        unsafe_allow_html=True
-    )
-
-    # Run pipeline
     with st.spinner("Analyzing video and generating answer..."):
+        answer = run_pipeline(video_id, user_question)
 
-        answer = run_pipeline(
-            video_id,
-            user_question
-        )
-
-    # Add assistant response
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": answer
-    })
-
+    st.session_state.messages.append({"role": "assistant", "content": answer})
     st.rerun()

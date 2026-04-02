@@ -142,5 +142,5 @@ This project is licensed under the **MIT License**.
 
 ---
 
-> **Note:** This project runs fully locally and does not send data to external APIs.......
+> **Note:** This project runs fully locally and does not send data to external APIs........
 

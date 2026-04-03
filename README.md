@@ -124,6 +124,7 @@ streamlit run app.py
 - Source citation in responses  
 - UI improvements  
 
+
 ## 👨‍💻 Contributors
 - [@ash-iiiiish](https://github.com/ash-iiiiish)
 
@@ -142,5 +143,5 @@ This project is licensed under the **MIT License**.
 
 ---
 
-> **Note:** This project runs fully locally and does not send data to external APIs.......
+> **Note:** This project runs fully locally and does not send data to external APIs........
 
